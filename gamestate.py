@@ -35,9 +35,13 @@ class GameState:
         return [ismatch, set]
 
 
-    def check_win(self, player):
-        check_sum = 3 if player == 'noughts' else 30
-        return self.check_winning_rows(check_sum)[0]
+    def check_winner(self):
+        if self.check_winning_rows(30)[0]:
+            return 'crosses'
+        elif self.check_winning_rows(3)[0]:
+            return 'noughts'
+        else:
+            return 'none'
 
     def check_near_win(self, player):
         check_sum = 2 if player == 'noughts' else 20
