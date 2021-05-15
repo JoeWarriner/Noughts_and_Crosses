@@ -1,4 +1,5 @@
 import pandas as pd
+import random
 
 WINNING_SETS = {
     "leftcol" : [[0, 0], [0, 1], [0, 2]],
@@ -12,6 +13,7 @@ WINNING_SETS = {
 }
 
 
+
 class GameState:
     def __init__(self):
         self.positions = pd.DataFrame([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
@@ -19,12 +21,12 @@ class GameState:
         self.turn = 1
         self.game_over = False
 
-    def check_winning_rows(self, check_value):
+    def check_sets(self, check_value, sets_dictionary):
         '''
-        Generic method to checks if any of the "winning rows" sum to the value passed.
+        Generic method to checks if any of the rows in the dictonary passed sum to the value passed.
         Returns a list with T/F at position 0, and the first set it enounters at position 1.
         '''
-        for set, coordlist in WINNING_SETS.items():
+        for set, coordlist in sets_dictionary.items():
             values = []
             ismatch = False
             for coords in coordlist:
@@ -36,29 +38,54 @@ class GameState:
 
 
     def check_winner(self):
-        if self.check_winning_rows(30)[0]:
+        if self.check_sets(30, WINNING_SETS)[0]:
             return 'crosses'
-        elif self.check_winning_rows(3)[0]:
+        elif self.check_sets(3, WINNING_SETS)[0]:
             return 'noughts'
         else:
             return 'none'
 
     def check_near_win(self, player):
         check_sum = 2 if player == 'noughts' else 20
-        return self.check_winning_rows(check_sum)[0]
+        return self.check_sets(check_sum, WINNING_SETS)[0]
 
     def near_win_coords(self, player):
         check_sum = 2 if player == 'noughts' else 20
-        winning_coords_list = WINNING_SETS[self.check_winning_rows(check_sum)[1]]
+        winning_coords_list = WINNING_SETS[self.check_sets(check_sum, WINNING_SETS)[1]]
         for coords in winning_coords_list:
             if self.positions[coords[0]][coords[1]] == 0:
                 return [coords[0], coords[1]]
 
     def check_move_possible(self, coords):
-        if self.positions[coords[0]][coords[1]] == 0:
+        if not ((0 <= coords[0] <= 2) and (0 <= coords[1] <= 2)):
+            return False
+        elif self.positions[coords[0]][coords[1]] == 0:
             return True
         else:
             return False
+
+    def check_mrmc(self, player):
+        '''
+        Slightly weird one. This is to check if either the middle row or middle column have only one total piece in
+        them belonging to the current player. Used for computer decision making.
+        '''
+        mrmc = {s: WINNING_SETS[s] for s in ('midrow','midcol')}
+        check_sum = 1 if player == 'noughts' else 10
+        return self.check_sets(check_sum, mrmc)[0]
+
+    def mrmc_coords(self, player):
+        mrmc = {s: WINNING_SETS[s] for s in ('midrow', 'midcol')}
+        print(mrmc)
+        check_sum = 1 if player == 'noughts' else 10
+        print(check_sum)
+        mrmc_set = mrmc[self.check_sets(check_sum, mrmc)[1]]
+        print(mrmc_set)
+        random.shuffle(mrmc_set)
+        print(mrmc_set)
+        for coords in mrmc_set:
+            if self.positions[coords[0]][coords[1]] == 0:
+                return coords
+
 
     def make_move(self, player, coords):
         new_value = 1 if player == 'noughts' else 10
@@ -69,11 +96,21 @@ class GameState:
 
 
 
-##Tests:
+
+# ##Tests:
 # game = GameState()
+# # print(game.positions)
+# # print(game.mrmc_coords('noughts'))
 #
+# # # print(game.check_move_possible([0,0]))
+# # print(game.check_move_possible([4,0]))
+# # print(game.check_move_possible(["T",0]))
+# # print(game.check_move_possible([0,4]))
+# print('Overall assessment: ', str(game.check_move_possible([0,2])))
+
+
 # print("Overall checks:")
-# print(game.positions)
+
 # print(game.board)
 # game.make_move('noughts', [0,1])
 # game.make_move('crosses', [1,1])
